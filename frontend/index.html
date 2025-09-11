@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Learning - Simple UI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🚀 FastAPI Learning</h1>
+            <p>Simple REST API Demo</p>
+        </header>
+
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="showTab('login', this)">Login</button>
+                <button class="tab-btn" onclick="showTab('register', this)">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <div class="tab-content" id="loginTab">
+                <h3>Login</h3>
+                <form id="loginForm">
+                    <input type="text" id="loginUsername" placeholder="Username" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+
+            <!-- Register Form -->
+            <div class="tab-content" id="registerTab" style="display: none;">
+                <h3>Register</h3>
+                <form id="registerForm">
+                    <input type="email" id="registerEmail" placeholder="Email" required>
+                    <input type="text" id="registerUsername" placeholder="Username" required>
+                    <input type="text" id="registerFullName" placeholder="Full Name (optional)">
+                    <input type="password" id="registerPassword" placeholder="Password (min 6 chars)" required>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- User Dashboard (Hidden initially) -->
+        <div class="dashboard" id="dashboard" style="display: none;">
+            <div class="dashboard-header">
+                <h2>Welcome, <span id="currentUser"></span>!</h2>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+
+            <!-- User Profile -->
+            <div class="profile-section">
+                <h3>Your Profile</h3>
+                <div id="userProfile"></div>
+            </div>
+
+            <!-- Admin Panel (Hidden for regular users) -->
+            <div class="admin-section" id="adminSection" style="display: none;">
+                <h3>🛡️ Admin Panel</h3>
+                <div class="admin-controls">
+                    <button onclick="loadAllUsers()" class="admin-btn">👥 View All Users</button>
+                    <button onclick="showUserStats()" class="admin-btn">📊 User Statistics</button>
+                </div>
+                <div id="adminContent"></div>
+            </div>
+
+            <!-- Items Section -->
+            <div class="items-section">
+                <div class="items-header">
+                    <h3>Items</h3>
+                    <div class="items-controls">
+                        <div class="view-toggle">
+                            <button id="myItemsBtn" class="toggle-btn active" onclick="switchItemsView('my')">My Items</button>
+                            <button id="allItemsBtn" class="toggle-btn" onclick="switchItemsView('all')">All Items</button>
+                        </div>
+                        <button onclick="showAddItem()" class="add-btn">+ Add Item</button>
+                    </div>
+                </div>
+
+                <!-- Add Item Form (Hidden initially) -->
+                <div class="add-item-form" id="addItemForm" style="display: none;">
+                    <h4>Add New Item</h4>
+                    <form id="itemForm">
+                        <input type="text" id="itemTitle" placeholder="Item Title" required>
+                        <textarea id="itemDescription" placeholder="Description (optional)"></textarea>
+                        <div class="form-buttons">
+                            <button type="submit">Add Item</button>
+                            <button type="button" onclick="hideAddItem()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Items List -->
+                <div id="itemsList"></div>
+            </div>
+        </div>
+
+        <!-- Message Display -->
+        <div id="message" class="message"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
