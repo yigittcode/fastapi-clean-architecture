@@ -9,7 +9,7 @@ from sqlalchemy import text
 from pydantic import ValidationError
 
 from app.core.config import settings
-from app.core.database import engine, get_db
+from app.core.database import sync_engine, get_db, get_async_db
 from app.core.logging import setup_logging, get_logger
 from app.core.exceptions import (
     http_exception_handler,
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     
     # Create tables
     from app.core.database import Base
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=sync_engine)
     
     # Create test user (development only)
     if settings.debug:

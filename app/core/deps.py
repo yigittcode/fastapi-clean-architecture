@@ -1,8 +1,9 @@
 from typing import Generator, Optional, Annotated
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
-from .database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from .database import get_async_db, get_db
 from .security import verify_token
 from .logging import get_logger, LogContext
 from .exceptions import CustomHTTPException
@@ -29,7 +30,7 @@ async def get_request_logger(request: Request) -> LogContext:
 
 
 async def get_current_user(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_db),
     credentials: HTTPAuthorizationCredentials = Depends(security),
     log_context: LogContext = Depends(get_request_logger)
 ) -> User:
@@ -48,7 +49,8 @@ async def get_current_user(
             log_context.warning("Invalid token provided")
             raise credentials_exception
         
-        user = db.query(User).filter(User.username == username).first()
+        result = await db.execute(select(User).where(User.username == username))
+        user = result.scalar_one_or_none()
         if user is None:
             log_context.warning("User not found", username=username)
             raise credentials_exception
@@ -95,8 +97,9 @@ async def get_superuser(
     return current_user
 
 
-# Dependency injection type aliases - fonksiyonlardan sonra tanımla
-DatabaseDep = Annotated[Session, Depends(get_db)]
+# Dependency injection type aliases
+AsyncDatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]
+DatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]  # Default to async
 UserDep = Annotated[User, Depends(get_current_user)]
 ActiveUserDep = Annotated[User, Depends(get_current_active_user)]
 LoggerDep = Annotated[LogContext, Depends(get_request_logger)]

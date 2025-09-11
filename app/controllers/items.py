@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from ..repositories.item import item_repository
 from ..models.item import Item
 from ..models.user import User
 from ..schemas.item import ItemCreate, ItemUpdate
@@ -11,36 +12,36 @@ class ItemsController:
     
     @staticmethod
     async def get_items(
-        db: Session, 
+        db: AsyncSession, 
         skip: int = 0, 
         limit: int = 100
     ) -> List[Item]:
         """Get all items with owner info"""
-        return db.query(Item).options(joinedload(Item.owner)).offset(skip).limit(limit).all()
+        return await item_repository.get_all_with_owners(db, skip=skip, limit=limit)
     
     @staticmethod
     async def get_items_without_owner(
-        db: Session, 
+        db: AsyncSession, 
         skip: int = 0, 
         limit: int = 100
     ) -> List[Item]:
         """Get all items without owner info - more efficient"""
-        return db.query(Item).offset(skip).limit(limit).all()
+        return await item_repository.get_all_without_owners(db, skip=skip, limit=limit)
     
     @staticmethod
-    async def get_user_items(db: Session, current_user: User) -> List[Item]:
+    async def get_user_items(db: AsyncSession, current_user: User) -> List[Item]:
         """Get current user's items with owner info"""
-        return db.query(Item).options(joinedload(Item.owner)).filter(Item.owner_id == current_user.id).all()
+        return await item_repository.get_user_items(db, current_user.id)
     
     @staticmethod
-    async def get_user_items_without_owner(db: Session, current_user: User) -> List[Item]:
+    async def get_user_items_without_owner(db: AsyncSession, current_user: User) -> List[Item]:
         """Get current user's items without owner info - more efficient"""
-        return db.query(Item).filter(Item.owner_id == current_user.id).all()
+        return await item_repository.get_user_items(db, current_user.id)
     
     @staticmethod
-    async def get_item_by_id(db: Session, item_id: int) -> Item:
+    async def get_item_by_id(db: AsyncSession, item_id: int) -> Item:
         """Get item by ID"""
-        item = db.query(Item).options(joinedload(Item.owner)).filter(Item.id == item_id).first()
+        item = await item_repository.get_with_owner(db, item_id)
         if not item:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -50,32 +51,22 @@ class ItemsController:
     
     @staticmethod
     async def create_item(
-        db: Session, 
+        db: AsyncSession, 
         item_data: ItemCreate, 
         current_user: User
     ) -> Item:
         """Create new item"""
-        db_item = Item(
-            title=item_data.title,
-            description=item_data.description,
-            owner_id=current_user.id
-        )
-        
-        db.add(db_item)
-        db.commit()
-        db.refresh(db_item)
-        
-        return db_item
+        return await item_repository.create_item(db, item_data, current_user.id)
     
     @staticmethod
     async def update_item(
-        db: Session, 
+        db: AsyncSession, 
         item_id: int, 
         item_data: ItemUpdate, 
         current_user: User
     ) -> Item:
         """Update item (owner only)"""
-        item = db.query(Item).filter(Item.id == item_id).first()
+        item = await item_repository.get(db, item_id)
         if not item:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -89,24 +80,16 @@ class ItemsController:
                 detail="Not enough permissions"
             )
         
-        # Update fields
-        update_data = item_data.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(item, field, value)
-        
-        db.commit()
-        db.refresh(item)
-        
-        return item
+        return await item_repository.update(db, item, item_data)
     
     @staticmethod
     async def delete_item(
-        db: Session, 
+        db: AsyncSession, 
         item_id: int, 
         current_user: User
     ) -> dict:
         """Delete item (owner only)"""
-        item = db.query(Item).filter(Item.id == item_id).first()
+        item = await item_repository.get(db, item_id)
         if not item:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -120,7 +103,5 @@ class ItemsController:
                 detail="Not enough permissions"
             )
         
-        db.delete(item)
-        db.commit()
-        
+        await item_repository.delete(db, item_id)
         return {"message": "Item deleted successfully"}

@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from ..repositories.user import user_repository
 from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
 from ..core.security import get_password_hash
@@ -11,7 +12,7 @@ class UsersController:
     
     @staticmethod
     async def get_users(
-        db: Session, 
+        db: AsyncSession, 
         skip: int = 0, 
         limit: int = 100,
         current_user: User = None
@@ -23,10 +24,10 @@ class UsersController:
                 detail="Not enough permissions"
             )
         
-        return db.query(User).offset(skip).limit(limit).all()
+        return await user_repository.get_multi(db, skip=skip, limit=limit)
     
     @staticmethod
-    async def get_user_by_id(db: Session, user_id: int, current_user: User) -> User:
+    async def get_user_by_id(db: AsyncSession, user_id: int, current_user: User) -> User:
         """Get user by ID"""
         # Users can only see their own profile, admins can see all
         if user_id != current_user.id and not current_user.is_superuser:
@@ -35,7 +36,7 @@ class UsersController:
                 detail="Not enough permissions"
             )
         
-        user = db.query(User).filter(User.id == user_id).first()
+        user = await user_repository.get(db, user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -46,7 +47,7 @@ class UsersController:
     
     @staticmethod
     async def create_user(
-        db: Session, 
+        db: AsyncSession, 
         user_data: UserCreate, 
         current_user: User
     ) -> User:
@@ -58,7 +59,7 @@ class UsersController:
             )
         
         # Check if email exists
-        existing_user = db.query(User).filter(User.email == user_data.email).first()
+        existing_user = await user_repository.get_by_email(db, user_data.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -66,7 +67,7 @@ class UsersController:
             )
         
         # Check if username exists
-        existing_user = db.query(User).filter(User.username == user_data.username).first()
+        existing_user = await user_repository.get_by_username(db, user_data.username)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -75,24 +76,11 @@ class UsersController:
         
         # Create user
         hashed_password = get_password_hash(user_data.password)
-        db_user = User(
-            email=user_data.email,
-            username=user_data.username,
-            full_name=user_data.full_name,
-            hashed_password=hashed_password,
-            is_active=True,
-            is_superuser=False
-        )
-        
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        
-        return db_user
+        return await user_repository.create_user(db, user_data, hashed_password)
     
     @staticmethod
     async def update_user(
-        db: Session, 
+        db: AsyncSession, 
         user_id: int, 
         user_data: UserUpdate, 
         current_user: User
@@ -105,26 +93,18 @@ class UsersController:
                 detail="Not enough permissions"
             )
         
-        user = db.query(User).filter(User.id == user_id).first()
+        user = await user_repository.get(db, user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
         
-        # Update fields
-        update_data = user_data.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(user, field, value)
-        
-        db.commit()
-        db.refresh(user)
-        
-        return user
+        return await user_repository.update(db, user, user_data)
     
     @staticmethod
     async def delete_user(
-        db: Session, 
+        db: AsyncSession, 
         user_id: int, 
         current_user: User
     ) -> dict:
@@ -141,14 +121,11 @@ class UsersController:
                 detail="Cannot delete your own account"
             )
         
-        user = db.query(User).filter(User.id == user_id).first()
+        user = await user_repository.delete(db, user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-        
-        db.delete(user)
-        db.commit()
         
         return {"message": "User deleted successfully"}
