@@ -5,8 +5,10 @@ A modern REST API built with FastAPI, demonstrating best practices for web devel
 ## 🚀 Features
 
 - **Modern Architecture**: Clean separation of concerns with controllers, routers, models, and schemas
+- **Repository Pattern**: Data access layer with generic CRUD operations
+- **Full Async Support**: True asynchronous database operations with AsyncSession
 - **JWT Authentication**: Secure token-based authentication system
-- **PostgreSQL Database**: Production-ready database with SQLAlchemy ORM
+- **PostgreSQL Database**: Production-ready database with SQLAlchemy ORM and async driver (asyncpg)
 - **Input Validation**: Robust data validation using Pydantic
 - **Structured Logging**: Request tracking and performance monitoring
 - **Global Exception Handling**: Consistent error responses
@@ -14,6 +16,7 @@ A modern REST API built with FastAPI, demonstrating best practices for web devel
 - **Security Features**: Rate limiting, CORS, security headers
 - **Frontend UI**: Simple HTML/CSS/JS interface for testing
 - **API Documentation**: Auto-generated Swagger/ReDoc documentation
+- **Performance Optimized**: Connection pooling, eager loading, efficient queries
 
 ## 📁 Project Structure
 
@@ -22,12 +25,14 @@ fastapi_learning/
 ├── app/
 │   ├── controllers/          # Business logic layer
 │   │   ├── __init__.py
-│   │   └── auth.py
+│   │   ├── auth.py
+│   │   ├── items.py
+│   │   └── users.py
 │   ├── core/                 # Core functionality
 │   │   ├── __init__.py
 │   │   ├── config.py         # Application settings
-│   │   ├── database.py       # Database configuration
-│   │   ├── deps.py           # Dependency injection
+│   │   ├── database.py       # Async database configuration
+│   │   ├── deps.py           # Async dependency injection
 │   │   ├── exceptions.py     # Exception handlers
 │   │   ├── logging.py        # Structured logging
 │   │   ├── middleware.py     # Custom middleware
@@ -36,6 +41,11 @@ fastapi_learning/
 │   │   ├── __init__.py
 │   │   ├── item.py
 │   │   └── user.py
+│   ├── repositories/         # Data access layer (Repository Pattern)
+│   │   ├── __init__.py
+│   │   ├── base.py           # Generic CRUD operations
+│   │   ├── item.py           # Item-specific queries
+│   │   └── user.py           # User-specific queries
 │   ├── routers/              # API endpoints
 │   │   ├── __init__.py
 │   │   ├── auth.py           # Authentication routes
@@ -51,8 +61,9 @@ fastapi_learning/
 │   ├── styles.css
 │   └── script.js
 ├── main.py                   # Application entry point
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Python dependencies (including asyncpg)
 ├── .env                      # Environment variables
+├── .env.example              # Environment template
 └── README.md
 ```
 
@@ -281,18 +292,84 @@ For production deployment:
 
 This project is for learning purposes. Feel free to use and modify as needed.
 
+## 🏗️ Architecture Patterns
+
+### Repository Pattern
+The application uses the Repository pattern for data access:
+
+```python
+# Generic base repository with common CRUD operations
+class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    async def get(self, db: AsyncSession, id: Any) -> Optional[ModelType]
+    async def get_multi(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ModelType]
+    async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType
+    async def update(self, db: AsyncSession, db_obj: ModelType, obj_in: UpdateSchemaType) -> ModelType
+    async def delete(self, db: AsyncSession, id: Any) -> ModelType
+
+# Specialized repositories inherit from base
+class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
+    async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]
+    async def get_by_username(self, db: AsyncSession, username: str) -> Optional[User]
+```
+
+### Async Database Operations
+Full async support with SQLAlchemy 2.0+ and asyncpg:
+
+```python
+# Async engine and session
+async_engine = create_async_engine("postgresql+asyncpg://...")
+AsyncSessionLocal = async_sessionmaker(bind=async_engine, class_=AsyncSession)
+
+# Async dependency injection
+async def get_async_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+```
+
+### Clean Architecture Layers
+1. **Routers**: HTTP request/response handling
+2. **Controllers**: Business logic and validation
+3. **Repositories**: Data access and persistence
+4. **Models**: Database entities
+5. **Schemas**: Data transfer objects (DTOs)
+
+## 🔧 Technology Stack
+
+### Backend
+- **FastAPI 0.104+**: Modern, fast web framework for building APIs
+- **SQLAlchemy 2.0+**: Async ORM with modern Python support
+- **asyncpg 0.29+**: Fast PostgreSQL async driver
+- **Pydantic 2.5+**: Data validation using Python type annotations
+- **Python-JOSE**: JWT token handling
+- **Passlib**: Password hashing
+- **Structlog**: Structured logging
+
+### Database
+- **PostgreSQL**: Production-ready relational database
+- **Async Connection Pool**: High-performance database connections
+- **Migration Support**: Database schema versioning with Alembic
+
+### Development
+- **Uvicorn**: ASGI server with auto-reload
+- **Rich**: Beautiful terminal output
+- **Type Hints**: Full typing support for better IDE experience
+
 ## 🎯 Learning Objectives
 
 This project demonstrates:
 
 - ✅ Modern FastAPI application structure
+- ✅ Repository Pattern implementation
+- ✅ Full async/await database operations
 - ✅ RESTful API design principles
 - ✅ Authentication and authorization
-- ✅ Database operations with ORM
+- ✅ Database operations with async ORM
 - ✅ Input validation and error handling
-- ✅ Logging and monitoring
+- ✅ Structured logging and monitoring
 - ✅ Security best practices
 - ✅ Frontend integration
 - ✅ API documentation
+- ✅ Performance optimization techniques
+- ✅ Clean architecture principles
 
 Perfect for learning FastAPI and modern web development practices!
