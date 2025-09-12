@@ -70,10 +70,10 @@ async function handleLogin(e) {
         } else {
             // Handle different error formats
             let errorMessage = 'Login failed';
-            if (data.detail) {
-                errorMessage = data.detail;
-            } else if (data.error && data.error.message) {
+            if (data.error && data.error.message) {
                 errorMessage = data.error.message;
+            } else if (data.detail) {
+                errorMessage = data.detail;
             } else if (data.message) {
                 errorMessage = data.message;
             }
@@ -111,10 +111,10 @@ async function handleRegister(e) {
         } else {
             // Handle different error formats
             let errorMessage = 'Registration failed';
-            if (data.detail) {
-                errorMessage = data.detail;
-            } else if (data.error && data.error.message) {
+            if (data.error && data.error.message) {
                 errorMessage = data.error.message;
+            } else if (data.detail) {
+                errorMessage = data.detail;
             } else if (data.message) {
                 errorMessage = data.message;
             }

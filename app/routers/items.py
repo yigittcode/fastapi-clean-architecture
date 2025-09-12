@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, status, Query
 from ..core.deps import DatabaseDep, ActiveUserDep, LoggerDep
-from ..controllers.items import ItemsController
+from ..services.items import ItemsService
 from ..schemas.item import Item as ItemSchema, ItemWithOwner, ItemCreate, ItemUpdate
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -16,7 +16,7 @@ async def create_item(
 ):
     """Create new item"""
     logger.info("Creating new item", title=item.title, user_id=current_user.id)
-    return await ItemsController.create_item(db, item, current_user)
+    return await ItemsService.create_item(db, item, current_user)
 
 
 @router.get("/", response_model=List[ItemWithOwner])
@@ -31,7 +31,7 @@ async def read_items(
     logger.info("Fetching items list", skip=skip, limit=limit, include_owner=include_owner)
     
     if include_owner:
-        items = await ItemsController.get_items(db, skip, limit)
+        items = await ItemsService.get_items(db, skip, limit)
         # Map to ItemWithOwner schema
         result = []
         for item in items:
@@ -50,7 +50,7 @@ async def read_items(
         return result
     else:
         # Return basic items without owner info
-        items = await ItemsController.get_items_without_owner(db, skip, limit)
+        items = await ItemsService.get_items_without_owner(db, skip, limit)
         return [ItemSchema.from_orm(item) for item in items]
 
 
@@ -62,7 +62,7 @@ async def read_my_items(
 ):
     """Get current user's items - no owner info needed since it's always current user"""
     logger.info("Fetching user items", user_id=current_user.id)
-    items = await ItemsController.get_user_items_without_owner(db, current_user)
+    items = await ItemsService.get_user_items_without_owner(db, current_user)
     return items
 
 
@@ -74,7 +74,7 @@ async def read_item(
 ):
     """Get item by ID"""
     logger.info("Fetching item by ID", item_id=item_id)
-    return await ItemsController.get_item_by_id(db, item_id)
+    return await ItemsService.get_item_by_id(db, item_id)
 
 
 @router.put("/{item_id}", response_model=ItemSchema)
@@ -87,7 +87,7 @@ async def update_item(
 ):
     """Update item (Owner only)"""
     logger.info("Updating item", item_id=item_id, user_id=current_user.id)
-    return await ItemsController.update_item(db, item_id, item_update, current_user)
+    return await ItemsService.update_item(db, item_id, item_update, current_user)
 
 
 @router.delete("/{item_id}")
@@ -99,4 +99,4 @@ async def delete_item(
 ):
     """Delete item (Owner only)"""
     logger.info("Deleting item", item_id=item_id, user_id=current_user.id)
-    return await ItemsController.delete_item(db, item_id, current_user)
+    return await ItemsService.delete_item(db, item_id, current_user)

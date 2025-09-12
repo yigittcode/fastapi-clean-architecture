@@ -45,12 +45,5 @@ async def get_async_db():
             await session.close()
 
 
-def get_db():
-    """Sync database session dependency (for migrations only)"""
-    from sqlalchemy.orm import sessionmaker
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Sync get_db removed - using async only for modern approach
+# sync_engine kept for table creation and migrations only

@@ -9,7 +9,7 @@ from ..schemas.user import UserCreate
 from ..repositories.auth import auth_repository
 
 
-class AuthController:
+class AuthService:
     """Authentication business logic"""
     
     @staticmethod

@@ -7,7 +7,7 @@ from ..models.user import User
 from ..schemas.item import ItemCreate, ItemUpdate
 
 
-class ItemsController:
+class ItemsService:
     """Items business logic"""
     
     @staticmethod

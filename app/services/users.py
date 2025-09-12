@@ -7,7 +7,7 @@ from ..schemas.user import UserCreate, UserUpdate
 from ..core.security import get_password_hash
 
 
-class UsersController:
+class UsersService:
     """Users business logic"""
     
     @staticmethod

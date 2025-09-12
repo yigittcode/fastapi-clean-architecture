@@ -3,13 +3,13 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 from pydantic import ValidationError
 
 from app.core.config import settings
-from app.core.database import sync_engine, get_db, get_async_db
+from app.core.database import sync_engine, get_async_db
 from app.core.logging import setup_logging, get_logger
 from app.core.exceptions import (
     http_exception_handler,
@@ -43,27 +43,32 @@ async def lifespan(app: FastAPI):
     # Create test user (development only)
     if settings.debug:
         try:
-            db = next(get_db())
+            from app.repositories.auth import auth_repository
+            from app.schemas.user import UserCreate
+            from app.core.database import AsyncSessionLocal
             
-            # Check if admin user exists
-            admin_user = db.query(User).filter(User.username == settings.admin_username).first()
-            if not admin_user:
-                admin_user = User(
-                    email=settings.admin_email,
-                    username=settings.admin_username,
-                    full_name=settings.admin_full_name,
-                    hashed_password=get_password_hash(settings.admin_password),
-                    is_active=True,
-                    is_superuser=True
-                )
-                db.add(admin_user)
-                db.commit()
-                logger.info("Admin user created", username=settings.admin_username)
-                print(f"Admin user created: username={settings.admin_username}, password={settings.admin_password}")
-            else:
-                logger.info("Admin user already exists")
-            
-            db.close()
+            async with AsyncSessionLocal() as db:
+                # Check if admin user exists
+                admin_user = await auth_repository.get_user_by_username(db, settings.admin_username)
+                if not admin_user:
+                    user_data = UserCreate(
+                        email=settings.admin_email,
+                        username=settings.admin_username,
+                        full_name=settings.admin_full_name,
+                        password=settings.admin_password
+                    )
+                    hashed_password = get_password_hash(settings.admin_password)
+                    await auth_repository.create_user_with_hashed_password(db, user_data, hashed_password)
+                    
+                    # Make admin superuser
+                    admin_user = await auth_repository.get_user_by_username(db, settings.admin_username)
+                    admin_user.is_superuser = True
+                    await db.commit()
+                    
+                    logger.info("Admin user created", username=settings.admin_username)
+                    print(f"Admin user created: username={settings.admin_username}, password={settings.admin_password}")
+                else:
+                    logger.info("Admin user already exists")
         except Exception as e:
             logger.error("Failed to create admin user", error=str(e))
     
@@ -143,9 +148,9 @@ async def health_check():
     
     # Database connection check
     try:
-        db = next(get_db())
-        db.execute(text("SELECT 1"))
-        db.close()
+        from app.core.database import AsyncSessionLocal
+        async with AsyncSessionLocal() as db:
+            await db.execute(text("SELECT 1"))
         db_status = "healthy"
     except Exception as e:
         logger.error("Database health check failed", error=str(e))

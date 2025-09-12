@@ -232,7 +232,7 @@ Business logic is separated from route handlers:
 ### Dependency Injection
 Clean dependency management with FastAPI's DI system:
 ```python
-DatabaseDep = Annotated[Session, Depends(get_db)]
+DatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]  # Always async - modern approach
 ActiveUserDep = Annotated[User, Depends(get_current_active_user)]
 ```
 

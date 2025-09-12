@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from .database import get_async_db, get_db
+from .database import get_async_db
 from .security import verify_token
 from .logging import get_logger, LogContext
 from .exceptions import CustomHTTPException
@@ -99,7 +99,7 @@ async def get_superuser(
 
 # Dependency injection type aliases
 AsyncDatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]
-DatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]  # Default to async
+DatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]  # Always async - modern approach
 UserDep = Annotated[User, Depends(get_current_user)]
 ActiveUserDep = Annotated[User, Depends(get_current_active_user)]
 LoggerDep = Annotated[LogContext, Depends(get_request_logger)]
