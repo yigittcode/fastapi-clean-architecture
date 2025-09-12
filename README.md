@@ -23,11 +23,6 @@ A modern REST API built with FastAPI, demonstrating best practices for web devel
 ```
 fastapi_learning/
 ├── app/
-│   ├── controllers/          # Business logic layer
-│   │   ├── __init__.py
-│   │   ├── auth.py
-│   │   ├── items.py
-│   │   └── users.py
 │   ├── core/                 # Core functionality
 │   │   ├── __init__.py
 │   │   ├── config.py         # Application settings
@@ -43,9 +38,15 @@ fastapi_learning/
 │   │   └── user.py
 │   ├── repositories/         # Data access layer (Repository Pattern)
 │   │   ├── __init__.py
+│   │   ├── auth.py           # Authentication repository
 │   │   ├── base.py           # Generic CRUD operations
 │   │   ├── item.py           # Item-specific queries
 │   │   └── user.py           # User-specific queries
+│   ├── services/             # Business logic layer (renamed from controllers)
+│   │   ├── __init__.py
+│   │   ├── auth.py           # Authentication service
+│   │   ├── items.py          # Items business logic
+│   │   └── users.py          # Users business logic
 │   ├── routers/              # API endpoints
 │   │   ├── __init__.py
 │   │   ├── auth.py           # Authentication routes
@@ -310,6 +311,16 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
     async def get_by_email(self, db: AsyncSession, email: str) -> Optional[User]
     async def get_by_username(self, db: AsyncSession, username: str) -> Optional[User]
+
+class AuthRepository(BaseRepository[User, UserCreate, UserUpdate]):
+    async def get_user_by_username(self, db: AsyncSession, username: str) -> Optional[User]
+    async def get_user_by_email(self, db: AsyncSession, email: str) -> Optional[User]
+    async def create_user_with_hashed_password(self, db: AsyncSession, user_data: UserCreate, hashed_password: str) -> User
+
+class ItemRepository(BaseRepository[Item, ItemCreate, ItemUpdate]):
+    async def get_with_owner(self, db: AsyncSession, item_id: int) -> Optional[Item]
+    async def get_all_with_owners(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Item]
+    async def get_user_items(self, db: AsyncSession, user_id: int) -> List[Item]
 ```
 
 ### Async Database Operations
@@ -328,10 +339,34 @@ async def get_async_db():
 
 ### Clean Architecture Layers
 1. **Routers**: HTTP request/response handling
-2. **Controllers**: Business logic and validation
+2. **Services**: Business logic and validation (renamed from Controllers)
 3. **Repositories**: Data access and persistence
 4. **Models**: Database entities
 5. **Schemas**: Data transfer objects (DTOs)
+
+### Service Layer Pattern
+The application uses a Service layer for business logic:
+
+```python
+# Service classes handle business logic
+class AuthService:
+    @staticmethod
+    async def login(login_data: LoginRequest, db: AsyncSession) -> dict
+    @staticmethod
+    async def register(user_data: UserCreate, db: AsyncSession) -> User
+
+class UsersService:
+    @staticmethod
+    async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[User]
+    @staticmethod
+    async def create_user(db: AsyncSession, user_data: UserCreate, current_user: User) -> User
+
+class ItemsService:
+    @staticmethod
+    async def get_items(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Item]
+    @staticmethod
+    async def create_item(db: AsyncSession, item_data: ItemCreate, current_user: User) -> Item
+```
 
 ## 🔧 Technology Stack
 
