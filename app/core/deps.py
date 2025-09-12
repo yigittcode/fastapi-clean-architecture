@@ -98,7 +98,6 @@ async def get_superuser(
 
 
 # Dependency injection type aliases
-AsyncDatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]
 DatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]  # Always async - modern approach
 UserDep = Annotated[User, Depends(get_current_user)]
 ActiveUserDep = Annotated[User, Depends(get_current_active_user)]

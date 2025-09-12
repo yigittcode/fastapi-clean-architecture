@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
-from ..core.deps import AsyncDatabaseDep
+from ..core.deps import DatabaseDep
 from ..services.auth import AuthService
 from ..schemas.auth import Token, LoginRequest
 from ..schemas.user import UserCreate, User as UserSchema
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 @router.post("/login", response_model=Token)
 async def login_for_access_token(
     login_data: LoginRequest,
-    db: AsyncDatabaseDep
+    db: DatabaseDep
 ):
     """User login - JSON format"""
     return await AuthService.login(login_data, db)
@@ -19,7 +19,7 @@ async def login_for_access_token(
 
 @router.post("/login/form", response_model=Token)
 async def login_for_access_token_form(
-    db: AsyncDatabaseDep,
+    db: DatabaseDep,
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
     """User login - Form format (OAuth2 compatible)"""
@@ -30,7 +30,7 @@ async def login_for_access_token_form(
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 async def register_user(
     user: UserCreate,
-    db: AsyncDatabaseDep
+    db: DatabaseDep
 ):
     """Register new user"""
     return await AuthService.register(user, db)
