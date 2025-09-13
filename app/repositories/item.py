@@ -125,5 +125,4 @@ class ItemRepository(BaseRepository[Item, ItemCreate, ItemUpdate]):
         return result.scalar()
 
 
-# Singleton instance
-item_repository = ItemRepository()
+# Singleton instance removed - now using dependency injection through deps.py
