@@ -86,5 +86,4 @@ class UserRepository(BaseRepository[User, UserCreate, UserUpdate]):
         return user
 
 
-# Singleton instance
-user_repository = UserRepository()
+# Singleton instance removed - now using dependency injection through deps.py
