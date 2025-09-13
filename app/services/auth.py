@@ -6,16 +6,18 @@ from ..core.config import settings
 from ..models.user import User
 from ..schemas.auth import LoginRequest
 from ..schemas.user import UserCreate
-from ..repositories.auth import auth_repository
+from ..repositories.auth import AuthRepository
 
 
 class AuthService:
     """Authentication business logic"""
     
-    @staticmethod
-    async def login(login_data: LoginRequest, db: AsyncSession) -> dict:
+    def __init__(self, auth_repository: AuthRepository):
+        self.auth_repository = auth_repository
+    
+    async def login(self, login_data: LoginRequest, db: AsyncSession) -> dict:
         """Handle user login"""
-        user = await auth_repository.get_user_by_username(db, login_data.username)
+        user = await self.auth_repository.get_user_by_username(db, login_data.username)
         
         if not user or not verify_password(login_data.password, user.hashed_password):
             raise HTTPException(
@@ -38,11 +40,10 @@ class AuthService:
         
         return {"access_token": access_token, "token_type": "bearer"}
     
-    @staticmethod
-    async def register(user_data: UserCreate, db: AsyncSession) -> User:
+    async def register(self, user_data: UserCreate, db: AsyncSession) -> User:
         """Handle user registration"""
         # Check if email exists
-        existing_user = await auth_repository.get_user_by_email(db, user_data.email)
+        existing_user = await self.auth_repository.get_user_by_email(db, user_data.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -50,7 +51,7 @@ class AuthService:
             )
         
         # Check if username exists
-        existing_user = await auth_repository.get_user_by_username(db, user_data.username)
+        existing_user = await self.auth_repository.get_user_by_username(db, user_data.username)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -59,4 +60,9 @@ class AuthService:
         
         # Create new user
         hashed_password = get_password_hash(user_data.password)
-        return await auth_repository.create_user_with_hashed_password(db, user_data, hashed_password)
+        return await self.auth_repository.create_user_with_hashed_password(db, user_data, hashed_password)
+
+
+# Service instance with dependency injection
+from ..repositories.auth import auth_repository
+auth_service = AuthService(auth_repository)

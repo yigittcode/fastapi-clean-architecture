@@ -1,12 +1,12 @@
 # Services package
 # Business logic layer for the FastAPI application
 
-from .auth import AuthService
-from .users import UsersService
-from .items import ItemsService
+from .auth import auth_service
+from .users import users_service
+from .items import items_service
 
 __all__ = [
-    "AuthService",
-    "UsersService", 
-    "ItemsService"
+    "auth_service",
+    "users_service", 
+    "items_service"
 ]

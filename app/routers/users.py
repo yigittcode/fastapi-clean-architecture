@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, status
 from ..core.deps import DatabaseDep, ActiveUserDep, SuperuserDep, LoggerDep
-from ..services.users import UsersService
+from ..services.users import users_service
 from ..schemas.user import User as UserSchema, UserCreate, UserUpdate
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -16,7 +16,7 @@ async def create_user(
 ):
     """Create new user (Admin only)"""
     logger.info("Creating new user", username=user.username)
-    return await UsersService.create_user(db, user, current_user)
+    return await users_service.create_user(db, user, current_user)
 
 
 @router.get("/", response_model=List[UserSchema])
@@ -29,7 +29,7 @@ async def read_users(
 ):
     """Get all users (Admin only)"""
     logger.info("Fetching users list", skip=skip, limit=limit)
-    return await UsersService.get_users(db, skip, limit, current_user)
+    return await users_service.get_users(db, skip, limit, current_user)
 
 
 @router.get("/me/", response_model=UserSchema)
@@ -52,7 +52,7 @@ async def read_user(
 ):
     """Get user by ID"""
     logger.info("Fetching user by ID", user_id=user_id)
-    return await UsersService.get_user_by_id(db, user_id, current_user)
+    return await users_service.get_user_by_id(db, user_id, current_user)
 
 
 @router.put("/{user_id}", response_model=UserSchema)
@@ -65,7 +65,7 @@ async def update_user(
 ):
     """Update user"""
     logger.info("Updating user", user_id=user_id)
-    return await UsersService.update_user(db, user_id, user_update, current_user)
+    return await users_service.update_user(db, user_id, user_update, current_user)
 
 
 @router.delete("/{user_id}")
@@ -77,4 +77,4 @@ async def delete_user(
 ):
     """Delete user (Admin only)"""
     logger.info("Deleting user", user_id=user_id)
-    return await UsersService.delete_user(db, user_id, current_user)
+    return await users_service.delete_user(db, user_id, current_user)
