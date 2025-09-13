@@ -133,6 +133,4 @@ class UsersService:
         return {"message": "User deleted successfully"}
 
 
-# Service instance with dependency injection
-from ..repositories.user import user_repository
-users_service = UsersService(user_repository)
+# Service instance removed - now using dependency injection through deps.py

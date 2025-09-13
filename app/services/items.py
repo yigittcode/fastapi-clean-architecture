@@ -107,6 +107,4 @@ class ItemsService:
         return {"message": "Item deleted successfully"}
 
 
-# Service instance with dependency injection
-from ..repositories.item import item_repository
-items_service = ItemsService(item_repository)
+# Service instance removed - now using dependency injection through deps.py
