@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..repositories.item import ItemRepository
 from ..models.item import Item
 from ..models.user import User
-from ..schemas.item import ItemCreate, ItemUpdate
+from ..schemas.item import ItemCreate, ItemUpdate, Item as ItemSchema
 
 
 class ItemsService:
@@ -18,7 +18,7 @@ class ItemsService:
         db: AsyncSession, 
         skip: int = 0, 
         limit: int = 100
-    ) -> List[Item]:
+    ) -> List[ItemSchema]:
         """Get all items with owner info"""
         return await self.item_repository.get_all_with_owners(db, skip=skip, limit=limit)
     
@@ -27,19 +27,19 @@ class ItemsService:
         db: AsyncSession, 
         skip: int = 0, 
         limit: int = 100
-    ) -> List[Item]:
+    ) -> List[ItemSchema]:
         """Get all items without owner info - more efficient"""
         return await self.item_repository.get_all_without_owners(db, skip=skip, limit=limit)
     
-    async def get_user_items(self, db: AsyncSession, current_user: User) -> List[Item]:
+    async def get_user_items(self, db: AsyncSession, current_user: User) -> List[ItemSchema]:
         """Get current user's items with owner info"""
         return await self.item_repository.get_user_items(db, current_user.id)
     
-    async def get_user_items_without_owner(self, db: AsyncSession, current_user: User) -> List[Item]:
+    async def get_user_items_without_owner(self, db: AsyncSession, current_user: User) -> List[ItemSchema]:
         """Get current user's items without owner info - more efficient"""
         return await self.item_repository.get_user_items(db, current_user.id)
     
-    async def get_item_by_id(self, db: AsyncSession, item_id: int) -> Item:
+    async def get_item_by_id(self, db: AsyncSession, item_id: int) -> ItemSchema:
         """Get item by ID"""
         item = await self.item_repository.get_with_owner(db, item_id)
         if not item:
@@ -54,7 +54,7 @@ class ItemsService:
         db: AsyncSession, 
         item_data: ItemCreate, 
         current_user: User
-    ) -> Item:
+    ) -> ItemSchema:
         """Create new item"""
         return await self.item_repository.create_item(db, item_data, current_user.id)
     
@@ -64,7 +64,7 @@ class ItemsService:
         item_id: int, 
         item_data: ItemUpdate, 
         current_user: User
-    ) -> Item:
+    ) -> ItemSchema:
         """Update item (owner only)"""
         item = await self.item_repository.get(db, item_id)
         if not item:
@@ -87,7 +87,7 @@ class ItemsService:
         db: AsyncSession, 
         item_id: int, 
         current_user: User
-    ) -> dict:
+    ) -> None:
         """Delete item (owner only)"""
         item = await self.item_repository.get(db, item_id)
         if not item:
@@ -104,7 +104,5 @@ class ItemsService:
             )
         
         await self.item_repository.delete(db, item_id)
-        return {"message": "Item deleted successfully"}
 
 
-# Service instance removed - now using dependency injection through deps.py

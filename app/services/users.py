@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..repositories.user import UserRepository
 from ..models.user import User
-from ..schemas.user import UserCreate, UserUpdate
+from ..schemas.user import UserCreate, UserUpdate, User as UserSchema
 from ..core.security import get_password_hash
 
 
@@ -19,7 +19,7 @@ class UsersService:
         skip: int = 0, 
         limit: int = 100,
         current_user: User = None
-    ) -> List[User]:
+    ) -> List[UserSchema]:
         """Get all users (admin only)"""
         if not current_user.is_superuser:
             raise HTTPException(
@@ -29,7 +29,7 @@ class UsersService:
         
         return await self.user_repository.get_multi(db, skip=skip, limit=limit)
     
-    async def get_user_by_id(self, db: AsyncSession, user_id: int, current_user: User) -> User:
+    async def get_user_by_id(self, db: AsyncSession, user_id: int, current_user: User) -> UserSchema:
         """Get user by ID"""
         # Users can only see their own profile, admins can see all
         if user_id != current_user.id and not current_user.is_superuser:
@@ -52,7 +52,7 @@ class UsersService:
         db: AsyncSession, 
         user_data: UserCreate, 
         current_user: User
-    ) -> User:
+    ) -> UserSchema:
         """Create new user (admin only)"""
         if not current_user.is_superuser:
             raise HTTPException(
@@ -86,7 +86,7 @@ class UsersService:
         user_id: int, 
         user_data: UserUpdate, 
         current_user: User
-    ) -> User:
+    ) -> UserSchema:
         """Update user"""
         # Users can only update their own profile, admins can update all
         if user_id != current_user.id and not current_user.is_superuser:
@@ -109,7 +109,7 @@ class UsersService:
         db: AsyncSession, 
         user_id: int, 
         current_user: User
-    ) -> dict:
+    ) -> None:
         """Delete user (admin only)"""
         if not current_user.is_superuser:
             raise HTTPException(
@@ -129,8 +129,6 @@ class UsersService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-        
-        return {"message": "User deleted successfully"}
 
 
 # Service instance removed - now using dependency injection through deps.py

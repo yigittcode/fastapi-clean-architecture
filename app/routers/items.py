@@ -94,7 +94,7 @@ async def update_item(
     return await items_service.update_item(db, item_id, item_update, current_user)
 
 
-@router.delete("/{item_id}")
+@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_item(
     item_id: int,
     db: DatabaseDep,
@@ -104,4 +104,4 @@ async def delete_item(
 ):
     """Delete item (Owner only)"""
     logger.info("Deleting item", item_id=item_id, user_id=current_user.id)
-    return await items_service.delete_item(db, item_id, current_user)
+    await items_service.delete_item(db, item_id, current_user)

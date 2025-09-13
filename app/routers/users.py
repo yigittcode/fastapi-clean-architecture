@@ -71,7 +71,7 @@ async def update_user(
     return await users_service.update_user(db, user_id, user_update, current_user)
 
 
-@router.delete("/{user_id}")
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,
     db: DatabaseDep,
@@ -81,4 +81,4 @@ async def delete_user(
 ):
     """Delete user (Admin only)"""
     logger.info("Deleting user", user_id=user_id)
-    return await users_service.delete_user(db, user_id, current_user)
+    await users_service.delete_user(db, user_id, current_user)
