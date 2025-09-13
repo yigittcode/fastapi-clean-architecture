@@ -63,6 +63,4 @@ class AuthService:
         return await self.auth_repository.create_user_with_hashed_password(db, user_data, hashed_password)
 
 
-# Service instance with dependency injection
-from ..repositories.auth import auth_repository
-auth_service = AuthService(auth_repository)
+# Service instance removed - now using dependency injection through deps.py

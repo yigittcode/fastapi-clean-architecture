@@ -1,7 +1,6 @@
 from typing import List
 from fastapi import APIRouter, status, Query
-from ..core.deps import DatabaseDep, ActiveUserDep, LoggerDep
-from ..services.items import items_service
+from ..core.deps import DatabaseDep, ActiveUserDep, LoggerDep, ItemsServiceDep
 from ..schemas.item import Item as ItemSchema, ItemWithOwner, ItemCreate, ItemUpdate
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -12,7 +11,8 @@ async def create_item(
     item: ItemCreate,
     db: DatabaseDep,
     logger: LoggerDep,
-    current_user: ActiveUserDep
+    current_user: ActiveUserDep,
+    items_service: ItemsServiceDep
 ):
     """Create new item"""
     logger.info("Creating new item", title=item.title, user_id=current_user.id)
@@ -23,6 +23,7 @@ async def create_item(
 async def read_items(
     db: DatabaseDep,
     logger: LoggerDep,
+    items_service: ItemsServiceDep,
     skip: int = 0,
     limit: int = 100,
     include_owner: bool = Query(True, description="Include owner information")
@@ -58,7 +59,8 @@ async def read_items(
 async def read_my_items(
     db: DatabaseDep,
     logger: LoggerDep,
-    current_user: ActiveUserDep
+    current_user: ActiveUserDep,
+    items_service: ItemsServiceDep
 ):
     """Get current user's items - no owner info needed since it's always current user"""
     logger.info("Fetching user items", user_id=current_user.id)
@@ -70,7 +72,8 @@ async def read_my_items(
 async def read_item(
     item_id: int,
     db: DatabaseDep,
-    logger: LoggerDep
+    logger: LoggerDep,
+    items_service: ItemsServiceDep
 ):
     """Get item by ID"""
     logger.info("Fetching item by ID", item_id=item_id)
@@ -83,7 +86,8 @@ async def update_item(
     item_update: ItemUpdate,
     db: DatabaseDep,
     logger: LoggerDep,
-    current_user: ActiveUserDep
+    current_user: ActiveUserDep,
+    items_service: ItemsServiceDep
 ):
     """Update item (Owner only)"""
     logger.info("Updating item", item_id=item_id, user_id=current_user.id)
@@ -95,7 +99,8 @@ async def delete_item(
     item_id: int,
     db: DatabaseDep,
     logger: LoggerDep,
-    current_user: ActiveUserDep
+    current_user: ActiveUserDep,
+    items_service: ItemsServiceDep
 ):
     """Delete item (Owner only)"""
     logger.info("Deleting item", item_id=item_id, user_id=current_user.id)

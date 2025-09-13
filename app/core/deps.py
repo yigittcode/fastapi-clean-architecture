@@ -97,10 +97,55 @@ async def get_superuser(
     return current_user
 
 
+# Service providers
+from ..repositories.auth import AuthRepository
+from ..repositories.user import UserRepository
+from ..repositories.item import ItemRepository
+from ..services.auth import AuthService
+from ..services.users import UsersService
+from ..services.items import ItemsService
+
+# Repository providers
+def get_auth_repository() -> AuthRepository:
+    """Get auth repository instance"""
+    return AuthRepository()
+
+def get_user_repository() -> UserRepository:
+    """Get user repository instance"""
+    return UserRepository()
+
+def get_item_repository() -> ItemRepository:
+    """Get item repository instance"""
+    return ItemRepository()
+
+# Service providers
+def get_auth_service(
+    auth_repo: AuthRepository = Depends(get_auth_repository)
+) -> AuthService:
+    """Get auth service instance with dependency injection"""
+    return AuthService(auth_repo)
+
+def get_users_service(
+    user_repo: UserRepository = Depends(get_user_repository)
+) -> UsersService:
+    """Get users service instance with dependency injection"""
+    return UsersService(user_repo)
+
+def get_items_service(
+    item_repo: ItemRepository = Depends(get_item_repository)
+) -> ItemsService:
+    """Get items service instance with dependency injection"""
+    return ItemsService(item_repo)
+
 # Dependency injection type aliases
 DatabaseDep = Annotated[AsyncSession, Depends(get_async_db)]  # Always async - modern approach
 UserDep = Annotated[User, Depends(get_current_user)]
 ActiveUserDep = Annotated[User, Depends(get_current_active_user)]
 LoggerDep = Annotated[LogContext, Depends(get_request_logger)]
 SuperuserDep = Annotated[User, Depends(get_superuser)]
+
+# Service dependencies
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+UsersServiceDep = Annotated[UsersService, Depends(get_users_service)]
+ItemsServiceDep = Annotated[ItemsService, Depends(get_items_service)]
 

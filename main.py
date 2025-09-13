@@ -43,9 +43,12 @@ async def lifespan(app: FastAPI):
     # Create test user (development only)
     if settings.debug:
         try:
-            from app.repositories.auth import auth_repository
+            from app.repositories.auth import AuthRepository
             from app.schemas.user import UserCreate
             from app.core.database import AsyncSessionLocal
+            
+            # Create repository instance for admin user creation
+            auth_repository = AuthRepository()
             
             async with AsyncSessionLocal() as db:
                 # Check if admin user exists
