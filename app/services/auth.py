@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.security import verify_password, create_access_token, get_password_hash
 from ..core.config import settings
 from ..models.user import User
-from ..schemas.auth import LoginRequest
-from ..schemas.user import UserCreate
+from ..schemas.auth import LoginRequest, Token
+from ..schemas.user import UserCreate, User as UserSchema
 from ..repositories.auth import AuthRepository
 
 
@@ -15,7 +15,7 @@ class AuthService:
     def __init__(self, auth_repository: AuthRepository):
         self.auth_repository = auth_repository
     
-    async def login(self, login_data: LoginRequest, db: AsyncSession) -> dict:
+    async def login(self, login_data: LoginRequest, db: AsyncSession) -> Token:
         """Handle user login"""
         user = await self.auth_repository.get_user_by_username(db, login_data.username)
         
@@ -38,9 +38,9 @@ class AuthService:
             expires_delta=access_token_expires
         )
         
-        return {"access_token": access_token, "token_type": "bearer"}
+        return Token(access_token=access_token, token_type="bearer")
     
-    async def register(self, user_data: UserCreate, db: AsyncSession) -> User:
+    async def register(self, user_data: UserCreate, db: AsyncSession) -> UserSchema:
         """Handle user registration"""
         # Check if email exists
         existing_user = await self.auth_repository.get_user_by_email(db, user_data.email)
@@ -63,4 +63,3 @@ class AuthService:
         return await self.auth_repository.create_user_with_hashed_password(db, user_data, hashed_password)
 
 
-# Service instance removed - now using dependency injection through deps.py

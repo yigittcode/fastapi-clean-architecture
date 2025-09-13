@@ -225,7 +225,7 @@ curl -X POST "http://localhost:8000/items/" \
 
 ### Controller Pattern
 Business logic is separated from route handlers:
-- **Controllers**: Handle business logic
+- **Services**: Handle business logic
 - **Routers**: Handle HTTP requests/responses
 - **Models**: Database entities
 - **Schemas**: Data validation and serialization

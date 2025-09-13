@@ -97,44 +97,44 @@ async def get_superuser(
     return current_user
 
 
-# Service providers
-from ..repositories.auth import AuthRepository
-from ..repositories.user import UserRepository
-from ..repositories.item import ItemRepository
-from ..services.auth import AuthService
-from ..services.users import UsersService
-from ..services.items import ItemsService
+# Service providers - Import moved to avoid circular imports
 
 # Repository providers
-def get_auth_repository() -> AuthRepository:
+def get_auth_repository():
     """Get auth repository instance"""
+    from ..repositories.auth import AuthRepository
     return AuthRepository()
 
-def get_user_repository() -> UserRepository:
+def get_user_repository():
     """Get user repository instance"""
+    from ..repositories.user import UserRepository
     return UserRepository()
 
-def get_item_repository() -> ItemRepository:
+def get_item_repository():
     """Get item repository instance"""
+    from ..repositories.item import ItemRepository
     return ItemRepository()
 
 # Service providers
 def get_auth_service(
-    auth_repo: AuthRepository = Depends(get_auth_repository)
-) -> AuthService:
+    auth_repo = Depends(get_auth_repository)
+):
     """Get auth service instance with dependency injection"""
+    from ..services.auth import AuthService
     return AuthService(auth_repo)
 
 def get_users_service(
-    user_repo: UserRepository = Depends(get_user_repository)
-) -> UsersService:
+    user_repo = Depends(get_user_repository)
+):
     """Get users service instance with dependency injection"""
+    from ..services.users import UsersService
     return UsersService(user_repo)
 
 def get_items_service(
-    item_repo: ItemRepository = Depends(get_item_repository)
-) -> ItemsService:
+    item_repo = Depends(get_item_repository)
+):
     """Get items service instance with dependency injection"""
+    from ..services.items import ItemsService
     return ItemsService(item_repo)
 
 # Dependency injection type aliases
@@ -145,7 +145,7 @@ LoggerDep = Annotated[LogContext, Depends(get_request_logger)]
 SuperuserDep = Annotated[User, Depends(get_superuser)]
 
 # Service dependencies
-AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
-UsersServiceDep = Annotated[UsersService, Depends(get_users_service)]
-ItemsServiceDep = Annotated[ItemsService, Depends(get_items_service)]
+AuthServiceDep = Annotated[object, Depends(get_auth_service)]
+UsersServiceDep = Annotated[object, Depends(get_users_service)]
+ItemsServiceDep = Annotated[object, Depends(get_items_service)]
 
